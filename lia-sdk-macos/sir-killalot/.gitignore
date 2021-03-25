@@ -115,3 +115,5 @@ dmypy.json
 
 venv
 .idea/
+
+replays/
