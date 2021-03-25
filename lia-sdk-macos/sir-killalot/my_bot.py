@@ -8,7 +8,7 @@ from lia import math_util
 from lia.bot import Bot
 from lia.networking_client import connect
 
-from warrior_ai import act as act_warrior
+from warrior_ai import act as act_warrior, spawn as spawn_warrior
 from worker_ai import act as act_worker
 
 
@@ -25,11 +25,10 @@ class MyBot(Bot):
 
         # If you have enough resources to spawn a new warrior unit then spawn it.
         if state["resources"] >= constants.WARRIOR_PRICE:
-            api.spawn_unit(UnitType.WARRIOR)
+            spawn_warrior(state, api)
 
         # We iterate through all of our units that are still alive.
         for unit in state["units"]:
-
             # If the unit is a worker and it sees at least one resource
             # then make it go to the first resource to collect it.
             if unit["type"] == UnitType.WORKER:
