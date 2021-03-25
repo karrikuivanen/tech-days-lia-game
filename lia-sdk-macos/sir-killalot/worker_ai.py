@@ -8,12 +8,16 @@ from lia import math_util
 from lia.bot import Bot
 from lia.networking_client import connect
 
+
 def spawn(state, api):
-    api.spawn_unit(UnitType.WORKER)
+    if state["resources"] >= constants.WORKER_PRICE:
+        api.spawn_unit(UnitType.WORKER)
+
 
 def act(state, api, unit):
     move(state, api, unit)
     gather_resource(state, api, unit)
+
 
 def move(state, api, unit):
     # If the unit is not going anywhere, we send it
@@ -31,10 +35,12 @@ def move(state, api, unit):
                 api.navigation_start(unit["id"], x, y)
                 break
 
+
 def gather_resource(state, api, unit):
     if len(unit["resourcesInView"]) > 0:
         resource = unit["resourcesInView"][0]
         api.navigation_start(unit["id"], resource["x"], resource["y"])
+
 
 def get_enemy_spawn_point():
     x = constants.MAP_WIDTH - constants.SPAWN_POINT.x
