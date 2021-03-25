@@ -8,6 +8,9 @@ from lia import math_util
 from lia.bot import Bot
 from lia.networking_client import connect
 
+from warrior_ai import act as act_warrior
+from worker_ai import act as act_worker
+
 
 # Initial implementation keeps picking random locations on the map
 # and sending units there. Worker units collect resources if they
@@ -26,32 +29,15 @@ class MyBot(Bot):
 
         # We iterate through all of our units that are still alive.
         for unit in state["units"]:
-            # If the unit is not going anywhere, we send it
-            # to a random valid location on the map.
-            if len(unit["navigationPath"]) == 0:
-
-                # Generate new x and y until you get a position on the map
-                # where there is no obstacle.
-                while True:
-                    x = random.randint(0, constants.MAP_WIDTH - 1)
-                    y = random.randint(0, constants.MAP_HEIGHT - 1)
-
-                    # If map[x][y] equals false it means that at (x,y) there is no obstacle.
-                    if constants.MAP[x][y] is False:
-                        # Send the unit to (x, y)
-                        api.navigation_start(unit["id"], x, y)
-                        break
 
             # If the unit is a worker and it sees at least one resource
             # then make it go to the first resource to collect it.
-            if unit["type"] == UnitType.WORKER and len(unit["resourcesInView"]) > 0:
-                resource = unit["resourcesInView"][0]
-                api.navigation_start(unit["id"], resource["x"], resource["y"])
+            if unit["type"] == UnitType.WORKER:
+                act_worker(state, api, unit)
 
             # If the unit is a warrior and it sees an opponent then make it shoot.
-            if unit["type"] == UnitType.WARRIOR and len(unit["opponentsInView"]) > 0:
-                api.shoot(unit["id"])
-                api.say_something(unit["id"], "I see you!")
+            if unit["type"] == UnitType.WARRIOR:
+                act_warrior(state, api, unit)
 
 
 # Connects your bot to Lia game engine, don't change it.
