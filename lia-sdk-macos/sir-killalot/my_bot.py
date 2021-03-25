@@ -9,7 +9,11 @@ from lia.bot import Bot
 from lia.networking_client import connect
 
 from warrior_ai import act as act_warrior, spawn as spawn_warrior
-from worker_ai import act as act_worker
+from worker_ai import act as act_worker, spawn as spawn_worker
+
+
+def get_unit_count_by_type(state, unit_type):
+    return len(list(filter(lambda unit: unit["type"] == unit_type, state["units"])))
 
 
 # Initial implementation keeps picking random locations on the map
@@ -22,6 +26,11 @@ class MyBot(Bot):
     # - GameState reference: https://docs.liagame.com/api/#gamestate
     # - Api reference:       https://docs.liagame.com/api/#api-object
     def update(self, state, api):
+
+        worker_count = get_unit_count_by_type(state, UnitType.WORKER)
+
+        if worker_count < 4 and state["resources"] >= constants.WORKER_PRICE:
+            spawn_worker(state, api)
 
         # If you have enough resources to spawn a new warrior unit then spawn it.
         if state["resources"] >= constants.WARRIOR_PRICE:

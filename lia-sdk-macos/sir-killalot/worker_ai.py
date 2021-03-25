@@ -8,6 +8,9 @@ from lia import math_util
 from lia.bot import Bot
 from lia.networking_client import connect
 
+def spawn(state, api):
+    api.spawn_unit(UnitType.WORKER)
+
 def act(state, api, unit):
     move(state, api, unit)
     gather_resource(state, api, unit)
