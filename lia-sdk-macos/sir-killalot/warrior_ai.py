@@ -1,5 +1,6 @@
 import asyncio
 import random
+from game_globals import *
 
 from lia.math_util import *
 from lia.enums import *
@@ -11,7 +12,14 @@ from lia.networking_client import connect
 TARGETING_THRESHOLD = 1
 TARGET_SQUARE = {"x": 40, "y": 80}
 SAFETY_MARGIN = 10
-YELL = ["DIE!", "VICTORY IS OURS!", "I AM YOUR FATHER!"]
+YELL = [
+    "DIE!",
+    "VICTORY IS OURS!",
+    "I AM YOUR FATHER!",
+    "FUBAR",
+    "RUTABAGA",
+    ":ruuskanen:",
+]
 MOVING_UNITS = set()
 
 
@@ -25,15 +33,48 @@ def act(state, api, unit):
     shoot_enemy(state, api, unit)
 
 
+def _scan_opposite_corner(api, unit, starting_position):
+    TURN_RIGHT_ZONE = {"min": 90, "max": 100}
+    TURN_LEFT_ZONE = {"min": 350, "max": 359}
+    if starting_position == "BOTTOM":
+        if (
+            unit["orientationAngle"] > TURN_RIGHT_ZONE["min"]
+            and unit["orientationAngle"] < TURN_RIGHT_ZONE["max"]
+        ):
+            api.set_rotation(unit["id"], "RIGHT")
+        if (
+            unit["orientationAngle"] > TURN_LEFT_ZONE["min"]
+            and unit["orientationAngle"] < TURN_LEFT_ZONE["max"]
+        ):
+            api.set_rotation(unit["id"], "LEFT")
+        if (
+            unit["orientationAngle"] > TURN_RIGHT_ZONE["max"]
+            and unit["orientationAngle"] < TURN_LEFT_ZONE["min"]
+        ):
+            api.set_rotation(unit["id"], "LEFT")
+
+
+def scan_opposite_corner(api, unit, starting_position):
+    api.set_rotation(unit["id"], "LEFT")
+
+
 def move(state, api, unit, defender=False):
-    if defender:
-        # TODO: move to home square
+    if unit["id"] in DEFENDING_WARRIORS:
+        if get_starting_pos() == "BOTTOM":
+            api.navigation_start(unit["id"], 2, 2)
+
+            if math_util.distance(unit["x"], unit["y"], 2, 2) <= 2:
+                api.navigation_stop(unit["id"])
+                scan_opposite_corner(api, unit, get_starting_pos())
+        else:
+            api.navigation_start(
+                unit["id"], constants.MAP_WIDTH - 2, constants.MAP_HEIGHT - 2
+            )
     else:
         if unit["speed"] == "NONE" and unit["rotation"] == "NONE":
             api.set_rotation(unit["id"], random.choice(["LEFT", "RIGHT"]))
         if not unit["id"] in MOVING_UNITS:
             MOVING_UNITS.add(unit["id"])
-            api.say_something(unit["id"], random.choice(YELL))
             move_into_position(api, unit)
 
 

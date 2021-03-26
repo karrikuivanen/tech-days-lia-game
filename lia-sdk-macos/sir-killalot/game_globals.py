@@ -1,0 +1,1 @@
+DEFENDING_WARRIORS = set()

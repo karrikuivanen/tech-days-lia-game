@@ -1,6 +1,6 @@
 import asyncio
 import random
-
+from game_globals import *
 from lia.enums import *
 from lia.api import *
 from lia import constants
@@ -14,7 +14,6 @@ from worker_ai import act as act_worker, spawn as spawn_worker
 MIN_WORKERS = 3
 MAX_WORKERS = 10
 WARRIORS_IN_HOME = set()
-DEFENDING_WARRIORS = set()
 
 HOME_SQUARE = {"x": 20, "y": 20}
 
@@ -26,7 +25,7 @@ def get_starting_pos():
         return "BOTTOM"
 
 
-def unit_in_home(unit):
+def unit_in_home(api, unit):
     if get_starting_pos() == "BOTTOM":
         return unit["x"] < HOME_SQUARE["x"] and unit["y"] < HOME_SQUARE["y"]
     else:
@@ -36,9 +35,13 @@ def unit_in_home(unit):
         )
 
 
-def assign_warrior_into_home(warrior_unit):
-    if unit_in_home(warrior_unit):
+def assign_warrior_into_home(api, warrior_unit):
+    if unit_in_home(api, warrior_unit):
         WARRIORS_IN_HOME.add(warrior_unit["id"])
+        api.say_something(warrior_unit["id"], "Im home")
+    else:
+        # api.say_something(unit["id"], message)
+        pass
 
 
 def get_unit_count_by_type(state, unit_type):
@@ -55,6 +58,7 @@ class MyBot(Bot):
     # - GameState reference: https://docs.liagame.com/api/#gamestate
     # - Api reference:       https://docs.liagame.com/api/#api-object
     def update(self, state, api):
+        WARRIORS_IN_HOME.clear()
         worker_count = get_unit_count_by_type(state, UnitType.WORKER)
 
         if worker_count < MIN_WORKERS:
@@ -75,8 +79,7 @@ class MyBot(Bot):
 
             # If the unit is a warrior and it sees an opponent then make it shoot.
             if unit["type"] == UnitType.WARRIOR:
-                assign_warrior_into_home(unit)
-                # TODO: Order warrior to move into home square
+                assign_warrior_into_home(api, unit)
                 act_warrior(state, api, unit)
         defend_home(state)
 
@@ -86,15 +89,16 @@ def defend_home(state):
         closest_warrior = (None, 10000000000000)
         for unit in state["units"]:
             if unit["type"] == UnitType.WARRIOR:
-                warrior_distance = distance(
+                warrior_distance = math_util.distance(
                     unit["x"],
                     unit["y"],
-                    constants.SPAWN_POINT["x"],
-                    constants.SPAWN_POINT["y"],
+                    constants.SPAWN_POINT.x,
+                    constants.SPAWN_POINT.y,
                 )
                 if warrior_distance < closest_warrior[1]:
                     closest_warrior = (unit["id"], warrior_distance)
-        # TODO: send closest warrior to home
+
+        DEFENDING_WARRIORS.add(closest_warrior[0])
 
 
 # Connects your bot to Lia game engine, don't change it.
