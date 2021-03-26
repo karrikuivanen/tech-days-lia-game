@@ -38,7 +38,6 @@ def unit_in_home(api, unit):
 def assign_warrior_into_home(api, warrior_unit):
     if unit_in_home(api, warrior_unit):
         WARRIORS_IN_HOME.add(warrior_unit["id"])
-        api.say_something(warrior_unit["id"], "Im home")
     else:
         # api.say_something(unit["id"], message)
         pass
