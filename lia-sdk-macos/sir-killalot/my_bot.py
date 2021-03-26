@@ -81,20 +81,11 @@ class MyBot(Bot):
 
 
 def defend_home(state):
-    if len(WARRIORS_IN_HOME) == 0:
+    if len(WARRIORS_IN_HOME) < 3:
         closest_warrior = (None, 10000000000000)
         for unit in state["units"]:
             if unit["type"] == UnitType.WARRIOR:
-                warrior_distance = math_util.distance(
-                    unit["x"],
-                    unit["y"],
-                    constants.SPAWN_POINT.x,
-                    constants.SPAWN_POINT.y,
-                )
-                if warrior_distance < closest_warrior[1]:
-                    closest_warrior = (unit["id"], warrior_distance)
-
-        DEFENDING_WARRIORS.add(closest_warrior[0])
+                DEFENDING_WARRIORS[unit["id"]] = None
 
 
 # Connects your bot to Lia game engine, don't change it.

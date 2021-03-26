@@ -22,6 +22,7 @@ YELL = [
 ]
 MOVING_UNITS = set()
 DEFENDERS_STATE = {}
+RESERVED_POINTS = set()
 
 
 def spawn(state, api):
@@ -65,9 +66,12 @@ def get_limit_angles():
         return (195, 255)
 
 
-def get_home_position():
+def get_home_position(state, x, y):
     if get_starting_pos() == "BOTTOM":
-        return (1, 1)
+        if (x, y) not in DEFENDING_WARRIORS.values():
+            return (x, y)
+        else:
+            return get_home_position(state, x + 5, y)
     else:
         return (constants.MAP_WIDTH - 1, constants.MAP_HEIGHT - 1)
 
@@ -98,8 +102,10 @@ def scan_opposite_corner(api, unit, starting_position):
 
 
 def move(state, api, unit, defender=False):
-    home_x, home_y = get_home_position()
     if unit["id"] in DEFENDING_WARRIORS:
+        if not DEFENDING_WARRIORS[unit["id"]]:
+            DEFENDING_WARRIORS[unit["id"]] = get_home_position(state, 1, 1)
+        home_x, home_y = DEFENDING_WARRIORS[unit["id"]]
         api.navigation_start(unit["id"], home_x, home_y)
 
         if math_util.distance(unit["x"], unit["y"], home_x, home_y) <= 2:
