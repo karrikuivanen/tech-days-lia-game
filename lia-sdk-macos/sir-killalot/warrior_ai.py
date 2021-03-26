@@ -21,6 +21,7 @@ YELL = [
     ":ruuskanen:",
 ]
 MOVING_UNITS = set()
+DEFENDERS_STATE = {}
 
 
 def spawn(state, api):
@@ -33,37 +34,80 @@ def act(state, api, unit):
     shoot_enemy(state, api, unit)
 
 
+def unit_in_zone(unit, zone):
+    return (
+        unit["orientationAngle"] >= zone["min"]
+        and unit["orientationAngle"] <= zone["max"]
+    )
+
+
 def _scan_opposite_corner(api, unit, starting_position):
     TURN_RIGHT_ZONE = {"min": 90, "max": 100}
-    TURN_LEFT_ZONE = {"min": 350, "max": 359}
+    TURN_LEFT_ZONE_A = {"min": 350, "max": 360}
+    TURN_LEFT_ZONE_B = {"min": 0, "max": 10}
+    # api.say_something(unit["id"], str(unit["orientationAngle"]))
     if starting_position == "BOTTOM":
-        if (
-            unit["orientationAngle"] > TURN_RIGHT_ZONE["min"]
-            and unit["orientationAngle"] < TURN_RIGHT_ZONE["max"]
-        ):
+        if unit_in_zone(unit, TURN_RIGHT_ZONE):
+            # api.say_something(unit["id"], "TURN RIGHT")
             api.set_rotation(unit["id"], "RIGHT")
-        if (
-            unit["orientationAngle"] > TURN_LEFT_ZONE["min"]
-            and unit["orientationAngle"] < TURN_LEFT_ZONE["max"]
-        ):
+        elif unit_in_zone(unit, TURN_LEFT_ZONE_A) or unit_in_zone(unit, TURN_LEFT_ZONE_B):
+            # api.say_something(unit["id"], "TURN LEFT")
             api.set_rotation(unit["id"], "LEFT")
-        if (
-            unit["orientationAngle"] > TURN_RIGHT_ZONE["max"]
-            and unit["orientationAngle"] < TURN_LEFT_ZONE["min"]
+        elif (
+            unit["orientationAngle"] > TURN_RIGHT_ZONE["min"]
+            # and unit["orientationAngle"] < TURN_LEFT_ZONE_A["min"]
         ):
-            api.set_rotation(unit["id"], "LEFT")
+            # api.say_something(unit["id"], "???")
+            api.set_rotation(unit["id"], "RIGHT")
+        elif unit["rotation"] == "NONE":
+            api.say_something(unit["id"], "Mitä perkelettä")
+            api.set_rotation(unit["id"], "RIGHT")
+        # else:
+        #     api.say_something(unit["id"], str(unit["orientationAngle"]))
+        #     api.set_rotation(unit["id"], "LEFT")
+
+
+def get_defender_state(unit):
+    if unit["id"] not in DEFENDERS_STATE:
+        return None
+    return DEFENDERS_STATE[unit["id"]]
+
+
+def set_defender_state(unit, state):
+    DEFENDERS_STATE[unit["id"]] = state
 
 
 def scan_opposite_corner(api, unit, starting_position):
-    api.set_rotation(unit["id"], "LEFT")
+    TURN_RIGHT_ZONE = {"min": 45, "max": 100}
+    TURN_LEFT_ZONE_A = {"min": 350, "max": 360}
+    TURN_LEFT_ZONE_B = {"min": 0, "max": 10}
+    api.say_something(unit["id"], get_defender_state(unit))
+    if (not get_defender_state(unit)):
+        # api.say_something(unit["id"], "Mitä perkelettä")
+        set_defender_state(unit, "INITIALIZING")
+    if (get_defender_state(unit) == "INITIALIZING"):
+        if unit["orientationAngle"] > TURN_RIGHT_ZONE["min"]:
+            api.set_rotation(unit["id"], "RIGHT")
+        else:
+            api.set_rotation(unit["id"], "RIGHT")
+            # api.say_something(unit["id"], "ELSE")
+            set_defender_state(unit, "TURNING_RIGHT")
+    elif (get_defender_state(unit) == "TURNING_RIGHT" and unit["orientationAngle"] <= 5):
+        # api.say_something(unit["id"], "Left")
+        api.set_rotation(unit["id"], "LEFT")
+        set_defender_state(unit, "TURNING_LEFT")
+    elif (get_defender_state(unit) == "TURNING_LEFT" and unit["orientationAngle"] >= 85):
+        # api.say_something(unit["id"], "Right")
+        api.set_rotation(unit["id"], "RIGHT")
+        set_defender_state(unit, "TURNING_RIGHT")
 
 
 def move(state, api, unit, defender=False):
     if unit["id"] in DEFENDING_WARRIORS:
         if get_starting_pos() == "BOTTOM":
-            api.navigation_start(unit["id"], 2, 2)
+            api.navigation_start(unit["id"], 8, 8)
 
-            if math_util.distance(unit["x"], unit["y"], 2, 2) <= 2:
+            if math_util.distance(unit["x"], unit["y"], 8, 8) <= 2:
                 api.navigation_stop(unit["id"])
                 scan_opposite_corner(api, unit, get_starting_pos())
         else:

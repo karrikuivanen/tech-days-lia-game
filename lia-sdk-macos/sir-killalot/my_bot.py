@@ -15,7 +15,7 @@ MIN_WORKERS = 3
 MAX_WORKERS = 10
 WARRIORS_IN_HOME = set()
 
-HOME_SQUARE = {"x": 20, "y": 20}
+HOME_SQUARE = {"x": 10, "y": 10}
 
 
 def get_starting_pos():
