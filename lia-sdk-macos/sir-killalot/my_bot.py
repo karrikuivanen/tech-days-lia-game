@@ -15,7 +15,7 @@ MIN_WORKERS = 3
 MAX_WORKERS = 10
 WARRIORS_IN_HOME = set()
 
-HOME_SQUARE = {"x": 10, "y": 10}
+HOME_SQUARE = {"x": 20, "y": 20}
 
 
 def get_starting_pos():
@@ -54,6 +54,13 @@ class MyBot(Bot):
     # - GameState reference: https://docs.liagame.com/api/#gamestate
     # - Api reference:       https://docs.liagame.com/api/#api-object
     def update(self, state, api):
+        fallen_defenders = []
+        for (unit_id, _pos) in DEFENDING_WARRIORS.items():
+            if not any(unit["id"] == unit_id for unit in state["units"]):
+                print("OH NO, KILLED!")
+                fallen_defenders.append(unit_id)
+        for unit_id in fallen_defenders:
+            del DEFENDING_WARRIORS[unit_id]
         WARRIORS_IN_HOME.clear()
         worker_count = get_unit_count_by_type(state, UnitType.WORKER)
 
@@ -82,7 +89,6 @@ class MyBot(Bot):
 
 def defend_home(state):
     if len(WARRIORS_IN_HOME) < 3:
-        closest_warrior = (None, 10000000000000)
         for unit in state["units"]:
             if unit["type"] == UnitType.WARRIOR and len(DEFENDING_WARRIORS) < 3:
                 DEFENDING_WARRIORS[unit["id"]] = None

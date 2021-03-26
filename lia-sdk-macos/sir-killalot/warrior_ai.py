@@ -19,10 +19,11 @@ YELL = [
     "FUBAR",
     "RUTABAGA",
     ":ruuskanen:",
+    ":ruuskanen:",
+    ":ruuskanen:",
 ]
 MOVING_UNITS = set()
 DEFENDERS_STATE = {}
-RESERVED_POINTS = set()
 
 
 def spawn(state, api):
@@ -66,14 +67,18 @@ def get_limit_angles():
         return (195, 255)
 
 
-def get_home_position(state, x, y):
-    if get_starting_pos() == "BOTTOM":
-        if (x, y) not in DEFENDING_WARRIORS.values():
-            return (x, y)
-        else:
-            return get_home_position(state, x + 5, y)
+def get_home_position(unit_id, state, x, y):
+    distance = 5 if get_starting_pos() == "BOTTOM" else -5
+    grow = list(DEFENDING_WARRIORS.keys()).index(unit_id) % 2 == 0
+    if (x, y) not in DEFENDING_WARRIORS.values():
+        return (x, y)
     else:
-        return (constants.MAP_WIDTH - 1, constants.MAP_HEIGHT - 1)
+        return get_home_position(
+            unit_id,
+            state,
+            x + distance if grow else x,
+            y + distance if not grow else y
+        )
 
 
 def scan_opposite_corner(api, unit, starting_position):
@@ -104,7 +109,12 @@ def scan_opposite_corner(api, unit, starting_position):
 def move(state, api, unit, defender=False):
     if unit["id"] in DEFENDING_WARRIORS:
         if not DEFENDING_WARRIORS[unit["id"]]:
-            DEFENDING_WARRIORS[unit["id"]] = get_home_position(state, 1, 1)
+            DEFENDING_WARRIORS[unit["id"]] = get_home_position(
+                unit["id"],
+                state,
+                1 if get_starting_pos() == "BOTTOM" else constants.MAP_WIDTH - 1,
+                1 if get_starting_pos() == "BOTTOM" else constants.MAP_HEIGHT - 1,
+            )
         home_x, home_y = DEFENDING_WARRIORS[unit["id"]]
         api.navigation_start(unit["id"], home_x, home_y)
 
@@ -148,6 +158,7 @@ def move_into_position(api, unit):
 
 
 def shoot_at_enemy(api, this_unit, enemy_unit):
+    api.say_something(this_unit["id"], random.choice(YELL))
     angle = angle_between_unit_and_point(this_unit, enemy_unit["x"], enemy_unit["y"])
     if angle < TARGETING_THRESHOLD and angle > -TARGETING_THRESHOLD:
         api.set_rotation(this_unit["id"], "NONE")
