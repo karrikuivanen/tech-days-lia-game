@@ -70,6 +70,18 @@ def move(state, api, unit, defender=False):
             api.navigation_start(
                 unit["id"], constants.MAP_WIDTH - 2, constants.MAP_HEIGHT - 2
             )
+
+            if (
+                math_util.distance(
+                    unit["x"],
+                    unit["y"],
+                    constants.MAP_WIDTH - 2,
+                    constants.MAP_HEIGHT - 2,
+                )
+                <= 2
+            ):
+                api.navigation_stop(unit["id"])
+                scan_opposite_corner(api, unit, get_starting_pos())
     else:
         if unit["speed"] == "NONE" and unit["rotation"] == "NONE":
             api.set_rotation(unit["id"], random.choice(["LEFT", "RIGHT"]))
