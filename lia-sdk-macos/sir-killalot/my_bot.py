@@ -84,7 +84,7 @@ def defend_home(state):
     if len(WARRIORS_IN_HOME) < 3:
         closest_warrior = (None, 10000000000000)
         for unit in state["units"]:
-            if unit["type"] == UnitType.WARRIOR:
+            if unit["type"] == UnitType.WARRIOR and len(DEFENDING_WARRIORS) < 3:
                 DEFENDING_WARRIORS[unit["id"]] = None
 
 
